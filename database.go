@@ -25,13 +25,13 @@ func connectDB() {
 
 func createInventoryTable() {
 	_,  error := DB.Exec(`CREATE TABLE inventory (
-		inventory_id INT NOT NULL AUTO_INCREMENT,
+		product_id INT NOT NULL AUTO_INCREMENT,
 		name VARCHAR(45) NOT NULL,
 		price INT NOT NULL,
 		qty INT NOT NULL,
 		qty_sold INT NULL,
 		removed TINYINT NOT NULL DEFAULT 0,
-		UNIQUE INDEX inventory_id_UNIQUE (inventory_id ASC));
+		UNIQUE INDEX product_id_UNIQUE (product_id ASC));
 	  `)
 
 	if error != nil {

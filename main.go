@@ -9,7 +9,7 @@ import (
 )
 
 type Product struct {
-	inventoryID int
+	productID int
 	productName     string
 	productPrice    int
 	productQty int
@@ -97,16 +97,16 @@ func showInventory(){
 
     	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"inventoryID", "Product name", "Price (USD)", "Quantity", "Quantity sold"})
+	t.AppendHeader(table.Row{"productID", "Product name", "Price (USD)", "Quantity", "Quantity sold"})
 	for showInventoryDatabase.Next() {
-		error = showInventoryDatabase.Scan(&inventory.inventoryID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
+		error = showInventoryDatabase.Scan(&inventory.productID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
 		if error != nil{
 			log.Fatal("Error occured!:", error)
 		}
         
 		if inventory.isRemoved == 0 && inventory.productQty > 0 {
 			t.AppendRows([]table.Row{
-				{inventory.inventoryID, inventory.productName, inventory.productPrice, inventory.productQty, inventory.qtySold},
+				{inventory.productID, inventory.productName, inventory.productPrice, inventory.productQty, inventory.qtySold},
 			})
 			t.AppendSeparator()
 	
@@ -120,19 +120,19 @@ func showInventory(){
 // Buy a product from the store.
 func buyProduct() {
 	var id int
-	fmt.Println("Please select the inventoryID of the product you want to purchase:")
+	fmt.Println("Please select the productID of the product you want to purchase:")
 	_, error := fmt.Scan(&id)
 	if error != nil {
 		panic(error)
 	}
 	
-	selector, error := DB.Query(`SELECT * FROM inventory WHERE inventory_id = ?;`, id)
+	selector, error := DB.Query(`SELECT * FROM inventory WHERE product_id = ?;`, id)
 	if error != nil{
 		log.Fatal("Error occured when preparing the inventory data:", error)
 	}
 
 	for selector.Next() {
-		error = selector.Scan(&inventory.inventoryID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
+		error = selector.Scan(&inventory.productID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
 		if error != nil{
 			panic(error.Error())
 		}
@@ -142,7 +142,7 @@ func buyProduct() {
 		log.Fatal("Error occured when fetching inventory data:", error)
 	}
 
-	if id != inventory.inventoryID {
+	if id != inventory.productID {
 		fmt.Println("Please enter a valid product ID")
 		return
 	}
@@ -154,7 +154,7 @@ func buyProduct() {
 		// Reduce the quantity of the store by 1.
 		inventory.productQty = inventory.productQty - 1
 		inventory.qtySold = inventory.qtySold + 1
-		_, error := DB.Exec(`UPDATE inventory SET qty = ?, qty_sold = ? WHERE inventory_id = ?;`, inventory.productQty, inventory.qtySold, id)
+		_, error := DB.Exec(`UPDATE inventory SET qty = ?, qty_sold = ? WHERE product_id = ?;`, inventory.productQty, inventory.qtySold, id)
 		if error != nil {
 			panic(error)
 		}
@@ -170,13 +170,13 @@ func buyProduct() {
 func removeProduct() {
 	var id int
 	// deleted := 0
-	fmt.Println("Please select the inventoryID of the product you want to remove from the store:")
+	fmt.Println("Please select the productID of the product you want to remove from the store:")
 	_, error := fmt.Scan(&id)
 	if error != nil {
 		panic(error)
 	}
 	
-	toBeDeleted, error := DB.Query(`SELECT removed, name FROM spades_shop.inventory WHERE inventory_id = ?;`, id)
+	toBeDeleted, error := DB.Query(`SELECT removed, name FROM spades_shop.inventory WHERE product_id = ?;`, id)
 	if error != nil{
 		log.Fatal("Error occured when fetching inventory data:", error)
 	}
@@ -193,7 +193,7 @@ func removeProduct() {
 			fmt.Println("The ID of this product is not in the Inventory! Enter a valid product ID.")
 			displayMenu()
 		} else {
-			remove, error := DB.Query(`UPDATE inventory SET removed = '1' WHERE inventory_id = ?;`, id)
+			remove, error := DB.Query(`UPDATE inventory SET removed = '1' WHERE product_id = ?;`, id)
 			if error != nil{
 			log.Fatal("Error occured when deleting product from the inventory:", error)
 			}
@@ -291,15 +291,15 @@ func showMasterInventory(){
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"inventoryID", "Product name", "Price (USD)", "Quantity", "Quantity sold", "Deleted(yes: 1, no: 0)"})
+	t.AppendHeader(table.Row{"productID", "Product name", "Price (USD)", "Quantity", "Quantity sold", "Deleted(yes: 1, no: 0)"})
 	for showInventoryDatabase.Next() {
-		error = showInventoryDatabase.Scan(&inventory.inventoryID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
+		error = showInventoryDatabase.Scan(&inventory.productID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
 		if error != nil{
 			panic(error.Error())
 		}
         
 		t.AppendRows([]table.Row{
-			{inventory.inventoryID, inventory.productName, inventory.productPrice, inventory.productQty, inventory.qtySold, inventory.isRemoved},
+			{inventory.productID, inventory.productName, inventory.productPrice, inventory.productQty, inventory.qtySold, inventory.isRemoved},
 		})
 		t.AppendSeparator()
 	}
