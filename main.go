@@ -87,34 +87,6 @@ func displayMenu() {
 	}
 }
 
-// Display all products information. This menu shows available, soldout and deleted products.
-func showMasterInventory(){
-	fmt.Println("This is our current inventory")
-	showInventoryDatabase, error := DB.Query(`SELECT * FROM inventory;`)
-	if error != nil{
-		log.Fatal("Error occured when fetching inventory data:", error)
-	}
-
-
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"inventoryID", "Product name", "Price (USD)", "Quantity", "Quantity sold", "Deleted(yes: 1, no: 0)"})
-	for showInventoryDatabase.Next() {
-		error = showInventoryDatabase.Scan(&inventory.inventoryID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
-		if error != nil{
-			panic(error.Error())
-		}
-        
-		t.AppendRows([]table.Row{
-			{inventory.inventoryID, inventory.productName, inventory.productPrice, inventory.productQty, inventory.qtySold, inventory.isRemoved},
-		})
-		t.AppendSeparator()
-	}
-	// newline(1)
-	t.Render()
-	displayMenu()
-}
-
 // Display available products information.
 func showInventory(){
 	fmt.Println("This is our current inventory")
@@ -142,51 +114,6 @@ func showInventory(){
 	}
 	// newline(1)
 	t.Render()
-	displayMenu()
-}
-
-// Add a new product to the store.
-func addProduct() {
-	newProduct := new(Product)
-	fmt.Println("Enter the name of the Car: ")
-	_, err_name := fmt.Scan(&newProduct.productName)
-	if err_name != nil{
-		log.Fatal(err_name)
-	}
-
-	fmt.Println("Enter the price of the product: ")
-	_, err_price := fmt.Scan(&newProduct.productPrice)
-	if err_price != nil{
-		log.Fatal(err_price)
-	} else if newProduct.productPrice * 1 != newProduct.productPrice || newProduct.productPrice * 0 != 0 {
-		fmt.Println("Enter a number!")
-		return
-	}
-
-	fmt.Println("Enter the quantity of the product: ")
-	_, err_qty := fmt.Scan(&newProduct.productQty)
-	if err_qty != nil{
-		log.Fatal(err_qty)
-	} else if newProduct.productQty * 1 != newProduct.productQty || newProduct.productQty * 0 != 0 {
-		fmt.Println("Enter a number!")
-		return
-	}
-
-	newProduct.qtySold = 0
-	// Insert new product into the database.
-	insertQuery := "INSERT INTO inventory (name, price, qty, qty_sold) VALUES (?, ?, ?, ?);"
-	stmt, error := DB.Prepare(insertQuery)
-	if error != nil {
-		log.Fatal("Unable to prepare statement:", error)
-	}
-
-	_, err := stmt.Exec( newProduct.productName, newProduct.productPrice, newProduct.productQty, newProduct.qtySold)
-	if err != nil {
-		log.Fatal("Unable to execute statement:", error)
-	}
-	fmt.Printf("%s was succesfully added to the store.", newProduct.productName)
-    
-	// newline(1)
 	displayMenu()
 }
 
@@ -239,35 +166,6 @@ func buyProduct() {
 	displayMenu()
 }
 
-// Show the current sales of the store.
-func showSales () {
-	fmt.Println("Below shows the current sales of Spades shop")
-	currentSales, error := DB.Query(`SELECT name, price, qty_sold FROM inventory;`)
-	if error != nil{
-		log.Fatal("Error occured when fetching sales data:", error)
-	}
-
-	sales := 0
-	// salesPerProduct := 0
-	for currentSales.Next() {
-		
-		error = currentSales.Scan(&inventory.productName, &inventory.productPrice, &inventory.qtySold)
-		if error != nil{
-			panic(error.Error())
-		}
-        
-		if inventory.qtySold > 0 {
-			salesPerProduct := inventory.qtySold * inventory.productPrice
-			fmt.Printf("We sold %d %s car(s) worth $%d\n", inventory.qtySold, inventory.productName, inventory.productPrice)
-			sales += salesPerProduct
-		}
-		
-	}
-
-	fmt.Printf("The total sales is $%d.", sales)
-	displayMenu()
-}
-
 // Remove a product from the store.
 func removeProduct() {
 	var id int
@@ -306,10 +204,108 @@ func removeProduct() {
 			displayMenu()
 		}
 	}
+}
 
-	
-	
-	
+// Add a new product to the store.
+func addProduct() {
+	newProduct := new(Product)
+	fmt.Println("Enter the name of the Car: ")
+	_, err_name := fmt.Scan(&newProduct.productName)
+	if err_name != nil{
+		log.Fatal(err_name)
+	}
+
+	fmt.Println("Enter the price of the product: ")
+	_, err_price := fmt.Scan(&newProduct.productPrice)
+	if err_price != nil{
+		log.Fatal(err_price)
+	} else if newProduct.productPrice * 1 != newProduct.productPrice || newProduct.productPrice * 0 != 0 {
+		fmt.Println("Enter a number!")
+		return
+	}
+
+	fmt.Println("Enter the quantity of the product: ")
+	_, err_qty := fmt.Scan(&newProduct.productQty)
+	if err_qty != nil{
+		log.Fatal(err_qty)
+	} else if newProduct.productQty * 1 != newProduct.productQty || newProduct.productQty * 0 != 0 {
+		fmt.Println("Enter a number!")
+		return
+	}
+
+	newProduct.qtySold = 0
+	// Insert new product into the database.
+	insertQuery := "INSERT INTO inventory (name, price, qty, qty_sold) VALUES (?, ?, ?, ?);"
+	stmt, error := DB.Prepare(insertQuery)
+	if error != nil {
+		log.Fatal("Unable to prepare statement:", error)
+	}
+
+	_, err := stmt.Exec( newProduct.productName, newProduct.productPrice, newProduct.productQty, newProduct.qtySold)
+	if err != nil {
+		log.Fatal("Unable to execute statement:", error)
+	}
+	fmt.Printf("%s was succesfully added to the store.", newProduct.productName)
+    
+	// newline(1)
+	displayMenu()
+}
+
+// Show the current sales of the store.
+func showSales () {
+	fmt.Println("Below shows the current sales of Spades shop")
+	currentSales, error := DB.Query(`SELECT name, price, qty_sold FROM inventory;`)
+	if error != nil{
+		log.Fatal("Error occured when fetching sales data:", error)
+	}
+
+	sales := 0
+	// salesPerProduct := 0
+	for currentSales.Next() {
+		
+		error = currentSales.Scan(&inventory.productName, &inventory.productPrice, &inventory.qtySold)
+		if error != nil{
+			panic(error.Error())
+		}
+        
+		if inventory.qtySold > 0 {
+			salesPerProduct := inventory.qtySold * inventory.productPrice
+			fmt.Printf("We sold %d %s car(s) worth $%d\n", inventory.qtySold, inventory.productName, inventory.productPrice)
+			sales += salesPerProduct
+		}
+		
+	}
+
+	fmt.Printf("The total sales is $%d.", sales)
+	displayMenu()
+}
+
+// Display all products information. This menu shows available, soldout and deleted products.
+func showMasterInventory(){
+	fmt.Println("This is our current inventory")
+	showInventoryDatabase, error := DB.Query(`SELECT * FROM inventory;`)
+	if error != nil{
+		log.Fatal("Error occured when fetching inventory data:", error)
+	}
+
+
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"inventoryID", "Product name", "Price (USD)", "Quantity", "Quantity sold", "Deleted(yes: 1, no: 0)"})
+	for showInventoryDatabase.Next() {
+		error = showInventoryDatabase.Scan(&inventory.inventoryID, &inventory.productName, &inventory.productPrice, &inventory.productQty, &inventory.qtySold, &inventory.isRemoved)
+		if error != nil{
+			panic(error.Error())
+		}
+        
+		t.AppendRows([]table.Row{
+			{inventory.inventoryID, inventory.productName, inventory.productPrice, inventory.productQty, inventory.qtySold, inventory.isRemoved},
+		})
+		t.AppendSeparator()
+	}
+	// newline(1)
+	t.Render()
+	displayMenu()
 }
 
 // Exit the store.
