@@ -87,7 +87,7 @@ func displayMenu() {
 	}
 }
 
-// Display all information
+// Display all products information. This menu shows available, soldout and deleted products.
 func showMasterInventory(){
 	fmt.Println("This is our current inventory")
 	showInventoryDatabase, error := DB.Query(`SELECT * FROM inventory;`)
@@ -115,7 +115,7 @@ func showMasterInventory(){
 	displayMenu()
 }
 
-
+// Display available products information.
 func showInventory(){
 	fmt.Println("This is our current inventory")
 	showInventoryDatabase, error := DB.Query(`SELECT * FROM inventory;`)
@@ -145,6 +145,7 @@ func showInventory(){
 	displayMenu()
 }
 
+// Add a new product to the store.
 func addProduct() {
 	newProduct := new(Product)
 	fmt.Println("Enter the name of the Car: ")
@@ -172,7 +173,7 @@ func addProduct() {
 	}
 
 	newProduct.qtySold = 0
-
+	// Insert new product into the database.
 	insertQuery := "INSERT INTO inventory (name, price, qty, qty_sold) VALUES (?, ?, ?, ?);"
 	stmt, error := DB.Prepare(insertQuery)
 	if error != nil {
@@ -189,6 +190,7 @@ func addProduct() {
 	displayMenu()
 }
 
+// Buy a product from the store.
 func buyProduct() {
 	var id int
 	fmt.Println("Please select the inventoryID of the product you want to purchase:")
@@ -222,6 +224,7 @@ func buyProduct() {
 		fmt.Println("This product is unavailable for sale")
 		return
 	} else {
+		// Reduce the quantity of the store by 1.
 		inventory.productQty = inventory.productQty - 1
 		inventory.qtySold = inventory.qtySold + 1
 		_, error := DB.Exec(`UPDATE inventory SET qty = ?, qty_sold = ? WHERE inventory_id = ?;`, inventory.productQty, inventory.qtySold, id)
@@ -236,6 +239,7 @@ func buyProduct() {
 	displayMenu()
 }
 
+// Show the current sales of the store.
 func showSales () {
 	fmt.Println("Below shows the current sales of Spades shop")
 	currentSales, error := DB.Query(`SELECT name, price, qty_sold FROM inventory;`)
@@ -264,6 +268,7 @@ func showSales () {
 	displayMenu()
 }
 
+// Remove a product from the store.
 func removeProduct() {
 	var id int
 	// deleted := 0
@@ -307,6 +312,7 @@ func removeProduct() {
 	
 }
 
+// Exit the store.
 func exit() {
 	fmt.Println("Thanks for using our shop.")
 	newline(1)
